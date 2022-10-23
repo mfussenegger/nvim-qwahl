@@ -1,6 +1,6 @@
 # nvim-qwahl
 
-A collection of pickers utilizing `vim.ui.select`.
+A collection of pickers utilizing `vim.ui.select`. Switch buffers, jump to tags and more.
 
 ## Installation
 
@@ -11,6 +11,11 @@ git clone https://github.com/mfussenegger/nvim-qwahl.git ~/.config/nvim/pack/plu
 ## Usage
 
 See `:help qwahl` for a list of available pickers.
+
+
+## Scope
+
+Pickers for functionality built into Neovim is in scope. Pickers for plugins are out of scope.
 
 
 ## qwahl?
