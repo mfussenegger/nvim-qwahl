@@ -62,7 +62,7 @@ function M.buf_lines()
 end
 
 
---- Display open buffers, jump to buffer when selected
+--- Display open buffers. Opens selected buffer in current window.
 function M.buffers()
   local bufs = vim.tbl_filter(
     function(b)
@@ -264,6 +264,50 @@ function M.quickfix()
     api.nvim_win_call(win, function()
       vim.cmd('normal! zvzz')
     end)
+  end)
+end
+
+
+--- Show jumplist. Open selected entry in current window and jump to its position.
+function M.jumplist()
+  local locations = vim.tbl_filter(
+    function(loc) return api.nvim_buf_is_valid(loc.bufnr) end,
+    vim.fn.getjumplist()[1]
+  )
+  local opts = {
+    prompt = 'Jumplist: ',
+    format_item = function(loc)
+      local line
+      if api.nvim_buf_is_loaded(loc.bufnr) then
+        local ok, lines = pcall(api.nvim_buf_get_lines, loc.bufnr, loc.lnum - 1, loc.lnum, true)
+        line = ok and lines[1]
+      else
+        local fname = api.nvim_buf_get_name(loc.bufnr)
+        local f = io.open(fname, "r")
+        if f then
+          local contents = f:read("*a")
+          f:close()
+          local lines = vim.split(contents, "\n")
+          line = lines[loc.lnum]
+        end
+      end
+      local label =  M.format_bufname(loc.bufnr) .. ':' .. tostring(loc.lnum)
+      if line then
+        return label .. ': ' .. line
+      else
+        return label
+      end
+    end
+  }
+  local win = api.nvim_get_current_win()
+  ui.select(locations, opts, function(loc)
+    if loc then
+      api.nvim_set_current_buf(loc.bufnr)
+      api.nvim_win_set_cursor(win, { loc.lnum, loc.col })
+      api.nvim_win_call(win, function()
+        vim.cmd('normal! zvzz')
+      end)
+    end
   end)
 end
 
