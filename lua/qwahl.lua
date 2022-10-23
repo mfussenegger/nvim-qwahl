@@ -312,4 +312,26 @@ function M.jumplist()
 end
 
 
+--- Show tagstack. Open selected entry in current window and jump to its position
+function M.tagstack()
+  local stack = vim.fn.gettagstack()
+  local opts = {
+    prompt = 'Tagstack: ',
+    format_item = function(loc)
+      return M.format_bufname(loc.bufnr) .. ': ' .. loc.tagname
+    end
+  }
+  local win = api.nvim_get_current_win()
+  ui.select(stack.items or {}, opts, function(loc)
+    if loc then
+      api.nvim_set_current_buf(loc.bufnr)
+      api.nvim_win_set_cursor(win, { loc.from[2], loc.from[3] })
+      api.nvim_win_call(win, function()
+        vim.cmd('normal! zvzz')
+      end)
+    end
+  end)
+end
+
+
 return M
