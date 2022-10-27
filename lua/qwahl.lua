@@ -132,7 +132,14 @@ function M.lsp_tags(opts)
     end
     return false
   end
-  assert(next(vim.lsp.buf_get_clients()), "Must have a client running to use lsp_tags")
+  local has_eligible_client = false
+  for _, client in pairs(vim.lsp.buf_get_clients()) do
+    if client.server_capabilities.documentSymbolProvider then
+      has_eligible_client = true
+      break
+    end
+  end
+  assert(has_eligible_client, "Must have a client running to use lsp_tags")
   vim.lsp.buf_request(0, 'textDocument/documentSymbol', params, function(err, result)
     assert(not err, vim.inspect(err))
     if not result then
