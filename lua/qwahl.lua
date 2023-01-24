@@ -209,9 +209,40 @@ function M.lsp_tags(opts)
 end
 
 
+--- Assume inline diffs: Look for `--- a/` markers and show filenames to jump to
+local function git_tags()
+  local win = api.nvim_get_current_win()
+  local lines = api.nvim_buf_get_lines(0, 0, -1, true)
+  local candidates = {}
+  for lnum, line in pairs(lines) do
+    if vim.startswith(line, '--- a/') then
+      table.insert(candidates, {
+        lnum = lnum,
+        line = string.sub(line, 7),
+      })
+    end
+  end
+  local opts = {
+    prompt = 'Diff: ',
+    format_item = function(x) return x.line end
+  }
+  ui.select(candidates, opts, function(candidate)
+    if candidate then
+      api.nvim_win_set_cursor(win, {candidate.lnum, 0})
+      api.nvim_win_call(win, function()
+        vim.cmd('normal! zvzz')
+      end)
+    end
+  end)
+end
+
+
 --- Displays tags ad-hoc generated using a `ctags` executable.
 --- Jumps to tag when selected.
 function M.buf_tags()
+  if vim.bo.filetype == 'git' then
+    return git_tags()
+  end
   local bufname = api.nvim_buf_get_name(0)
   assert(vim.fn.filereadable(bufname), 'File to generate tags for must be readable')
   local ok, output = pcall(vim.fn.system, {
