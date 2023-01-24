@@ -167,6 +167,9 @@ function M.lsp_tags(opts)
       end
     end
     add_items(result)
+    if opts.mode and opts.mode == "prev" then
+      items = list_reverse(items)
+    end
 
     local select_opts = {
       prompt = 'Tag: ',
