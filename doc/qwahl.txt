@@ -1,4 +1,4 @@
-================================================================================
+==============================================================================
 Collection of pickers utilizing vim.ui.select                            *qwahl*
 
 M.format_bufname({bufnr})                                 *qwahl.format_bufname*
@@ -10,7 +10,7 @@ M.format_bufname({bufnr})                                 *qwahl.format_bufname*
         {bufnr}  (number)
 
     Returns: ~
-        {string}
+        (string)
 
 
 M.try()                                                              *qwahl.try*

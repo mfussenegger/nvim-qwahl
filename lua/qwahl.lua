@@ -292,17 +292,12 @@ function M.quickfix()
       return M.format_bufname(item.bufnr) .. ': ' .. item.text
     end
   }
-  ui.select(items, opts, function(item)
+  ui.select(items, opts, function(item, idx)
     if not item then
       return
     end
-    vim.fn.bufload(item.bufnr)
-    api.nvim_win_set_buf(win, item.bufnr)
-    local ok = pcall(api.nvim_win_set_cursor, win, {item.lnum, item.col - 1})
-    if not ok then
-      api.nvim_win_set_cursor(win, {item.lnum, 0})
-    end
     api.nvim_win_call(win, function()
+      vim.cmd('cc ' .. tostring(idx))
       vim.cmd('normal! zvzz')
     end)
   end)
