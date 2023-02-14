@@ -61,4 +61,13 @@ M.tagstack()                                                    *qwahl.tagstack*
      Show tagstack. Open selected entry in current window and jump to its position
 
 
+M.diagnostic({bufnr?}, {opts?})                               *qwahl.diagnostic*
+     Show diagnostic and jump to the location if selected
+
+
+    Parameters: ~
+        {bufnr?}  (integer)                                       0 for current buffer; nil for all diagnostic
+        {opts?}   ({lnum?:integer,severity?:DiagnosticSeverity})  See vim.diagnostic.get
+
+
 vim:tw=78:ts=8:noet:ft=help:norl:
