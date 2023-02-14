@@ -370,4 +370,29 @@ function M.tagstack()
 end
 
 
+--- Show diagnostic and jump to the location if selected
+---
+---@param bufnr? integer 0 for current buffer; nil for all diagnostic
+---@param opts? {lnum?: integer, severity?: DiagnosticSeverity} See vim.diagnostic.get
+function M.diagnostic(bufnr, opts)
+  local diagnostic = vim.diagnostic.get(bufnr, opts)
+  local ui_opts = {
+    prompt = 'Diagnostic: ',
+    format_item = function(d)
+      return d.message
+    end
+  }
+  local win = api.nvim_get_current_win()
+  ui.select(diagnostic, ui_opts, function(d)
+    if d then
+      api.nvim_set_current_buf(d.bufnr)
+      api.nvim_win_set_cursor(win, { d.lnum + 1, d.col })
+      api.nvim_win_call(win, function()
+        vim.cmd('normal! zvzz')
+      end)
+    end
+  end)
+end
+
+
 return M
