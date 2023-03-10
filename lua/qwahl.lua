@@ -96,12 +96,15 @@ end
 ---@class lsp_tags.opts
 ---@field kind nil|string[] filter tags by kind
 ---@field mode "next"|"prev"|nil Include only tags after/before the cursor
+---@field pick_first boolean? Select first result automatically. Defaults to false
+---@field on_done function? Callback called after selection/abort
 
 
 --- Display LSP symbols in current buffer, jump to symbol position when selected.
 --- @param opts nil|lsp_tags.opts
 function M.lsp_tags(opts)
   opts = opts or {}
+  opts.on_done = opts.on_done or function(_) end
   local bufnr = api.nvim_get_current_buf()
   local function kind_matches(symbol)
     if opts.kind == nil then
@@ -155,6 +158,22 @@ function M.lsp_tags(opts)
     end
   end
 
+  local function jump(item)
+    if not item then
+      opts.on_done()
+      return
+    end
+    local range = item.range or item.location.range
+    api.nvim_win_set_cursor(win, {
+      range.start.line + 1,
+      range.start.character
+    })
+    api.nvim_win_call(win, function()
+      vim.cmd('normal! zvzz')
+    end)
+    opts.on_done(item)
+  end
+
   local function countdown()
     num_remaining = num_remaining - 1
     if num_remaining > 0 then
@@ -162,6 +181,10 @@ function M.lsp_tags(opts)
     end
     if opts.mode and opts.mode == "prev" then
       items = list_reverse(items)
+    end
+    if opts.pick_first then
+      jump(items[1])
+      return
     end
     local select_opts = {
       prompt = 'Tag: ',
@@ -186,17 +209,7 @@ function M.lsp_tags(opts)
         end
       end,
     }
-    ui.select(items, select_opts, function(item)
-      if not item then return end
-      local range = item.range or item.location.range
-      api.nvim_win_set_cursor(win, {
-        range.start.line + 1,
-        range.start.character
-      })
-      api.nvim_win_call(win, function()
-        vim.cmd('normal! zvzz')
-      end)
-    end)
+    ui.select(items, select_opts, jump)
   end
   for _, client in ipairs(clients) do
     local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
