@@ -102,10 +102,7 @@ end
 --- @param opts nil|lsp_tags.opts
 function M.lsp_tags(opts)
   opts = opts or {}
-  local params = vim.lsp.util.make_position_params()
-  params.context = {
-    includeDeclaration = true
-  }
+  local bufnr = api.nvim_get_current_buf()
   local function kind_matches(symbol)
     if opts.kind == nil then
       return true
@@ -132,45 +129,40 @@ function M.lsp_tags(opts)
     end
     return false
   end
-  local has_eligible_client = false
-  for _, client in pairs(vim.lsp.buf_get_clients()) do
+  local clients = {}
+  for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
     if client.server_capabilities.documentSymbolProvider then
-      has_eligible_client = true
+      table.insert(clients, client)
       break
     end
   end
-  assert(has_eligible_client, "Must have a client running to use lsp_tags")
-  vim.lsp.buf_request(0, 'textDocument/documentSymbol', params, function(err, result)
-    assert(not err, vim.inspect(err))
-    if not result then
+  assert(next(clients), "Must have a client running to use lsp_tags")
+
+  local num_remaining = #clients
+  local items = {}
+  local add_items = nil
+  local num_root_primitives = 0
+
+  add_items = function(xs, parent)
+    for _, x in ipairs(xs) do
+      x.__parent = parent
+      if include(x) then
+        table.insert(items, x)
+      end
+      if x.children then
+        add_items(x.children, x)
+      end
+    end
+  end
+
+  local function countdown()
+    num_remaining = num_remaining - 1
+    if num_remaining > 0 then
       return
     end
-    local items = {}
-    local add_items = nil
-    add_items = function(xs, parent)
-      for _, x in ipairs(xs) do
-        x.__parent = parent
-        if include(x) then
-          table.insert(items, x)
-        end
-        if x.children then
-          add_items(x.children, x)
-        end
-      end
-    end
-    local num_root_primitives = 0
-    for _, x in pairs(result) do
-      -- 6 is Method, the first kind that is not a container
-      -- (File = 1; Module = 2; Namespace = 3; Package = 4; Class = 5;)
-      if x.kind >= 6 then
-        num_root_primitives = num_root_primitives + 1
-      end
-    end
-    add_items(result)
     if opts.mode and opts.mode == "prev" then
       items = list_reverse(items)
     end
-
     local select_opts = {
       prompt = 'Tag: ',
       format_item = function(item)
@@ -205,7 +197,28 @@ function M.lsp_tags(opts)
         vim.cmd('normal! zvzz')
       end)
     end)
-  end)
+  end
+  for _, client in ipairs(clients) do
+    local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
+    params.context = {
+      includeDeclaration = true
+    }
+    client.request("textDocument/documentSymbol", params, function(err, result)
+      assert(not err, vim.inspect(err))
+      if not result then
+        return
+      end
+      for _, x in pairs(result) do
+        -- 6 is Method, the first kind that is not a container
+        -- (File = 1; Module = 2; Namespace = 3; Package = 4; Class = 5;)
+        if x.kind >= 6 then
+          num_root_primitives = num_root_primitives + 1
+        end
+      end
+      add_items(result)
+      countdown()
+    end)
+  end
 end
 
 
