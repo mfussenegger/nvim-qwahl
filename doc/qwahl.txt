@@ -70,4 +70,9 @@ M.diagnostic({bufnr?}, {opts?})                               *qwahl.diagnostic*
         {opts?}   ({lnum?:integer,severity?:DiagnosticSeverity})  See vim.diagnostic.get
 
 
+M.spellsuggest()                                            *qwahl.spellsuggest*
+     Show spelling suggestions for the word under the cursor.
+     Replaces the word if a suggestion is selected
+
+
 vim:tw=78:ts=8:noet:ft=help:norl:
