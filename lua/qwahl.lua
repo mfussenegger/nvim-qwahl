@@ -421,4 +421,24 @@ function M.diagnostic(bufnr, opts)
 end
 
 
+--- Show spelling suggestions for the word under the cursor.
+--- Replaces the word if a suggestion is selected
+function M.spellsuggest()
+  local word = vim.fn.expand("<cword>")
+  local suggestions = vim.fn.spellsuggest(word)
+  local opts = {
+    prompt = 'Change "' .. word .. '" to: ',
+    format_item = function(x)
+      return x
+    end,
+  }
+  ui.select(suggestions, opts, function(choice)
+    if choice then
+      vim.cmd.normal({ "ciw" .. choice, bang = true })
+      vim.cmd.stopinsert()
+    end
+  end)
+end
+
+
 return M
