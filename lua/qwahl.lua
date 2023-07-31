@@ -4,6 +4,9 @@ local api = vim.api
 local ui = vim.ui
 local M = {}
 
+---@diagnostic disable-next-line: deprecated
+local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients
+
 
 local function list_reverse(xs)
   local result = {}
@@ -20,7 +23,8 @@ end
 ---@param bufnr number
 ---@return string
 function M.format_bufname(bufnr)
-  return vim.fn.fnamemodify(api.nvim_buf_get_name(bufnr), ':.')
+  local fname = api.nvim_buf_get_name(bufnr)
+  return assert(vim.fn.fnamemodify(fname, ':.'), "fnamemodify must return result")
 end
 
 
@@ -66,7 +70,7 @@ end
 function M.buffers()
   local bufs = vim.tbl_filter(
     function(b)
-      return api.nvim_buf_is_loaded(b) and api.nvim_buf_get_option(b, 'buftype') ~= 'quickfix'
+      return api.nvim_buf_is_loaded(b) and vim.bo[b].buftype ~= 'quickfix'
     end,
     api.nvim_list_bufs()
   )
@@ -74,11 +78,11 @@ function M.buffers()
     local fullname = api.nvim_buf_get_name(b)
     local name
     if #fullname == 0 then
-      name = '[No Name] (' .. api.nvim_buf_get_option(b, 'buftype') .. ')'
+      name = '[No Name] (' .. vim.bo[b].buftype .. ')'
     else
       name = M.format_bufname(b)
     end
-    local modified = api.nvim_buf_get_option(b, 'modified')
+    local modified = vim.bo[b].modified
     return modified and name .. ' [+]' or name
   end
   local opts = {
@@ -133,7 +137,7 @@ function M.lsp_tags(opts)
     return false
   end
   local clients = {}
-  for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
+  for _, client in pairs(get_clients({ bufnr = bufnr })) do
     if client.server_capabilities.documentSymbolProvider then
       table.insert(clients, client)
       break
@@ -277,7 +281,7 @@ function M.buf_tags()
     '-',
     '--sort=yes',
     '--excmd=number',
-    '--language-force=' .. api.nvim_buf_get_option(0, 'filetype'),
+    '--language-force=' .. vim.bo.filetype,
     bufname
   })
   if not ok or api.nvim_get_vvar('shell_error') ~= 0 then
