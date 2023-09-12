@@ -266,7 +266,7 @@ end
 --- Displays tags ad-hoc generated using a `ctags` executable.
 --- Jumps to tag when selected.
 function M.buf_tags()
-  if vim.bo.filetype == 'git' then
+  if vim.bo.filetype == 'git' or vim.bo.filetype == "gitcommit" then
     return git_tags()
   end
   local bufname = api.nvim_buf_get_name(0)
