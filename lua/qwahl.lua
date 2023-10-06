@@ -441,4 +441,32 @@ function M.spellsuggest()
 end
 
 
+--- Show helptags.
+--- Opens the help and jumps to a tag on selection.
+function M.helptags()
+  local files = api.nvim_get_runtime_file("doc/tags", true)
+  local tags = {}
+  local delimiter = string.char(9)
+
+  for _, file in ipairs(files) do
+    for line in io.lines(file) do
+      local fields = vim.split(line, delimiter, { plain = true })
+      table.insert(tags, fields)
+    end
+  end
+
+  local opts = {
+    prompt = "Helptags: ",
+    format_item = function(x)
+      return x[1]
+    end,
+  }
+  ui.select(tags, opts, function(choice)
+    if choice then
+      vim.cmd.help(choice[1])
+    end
+  end)
+end
+
+
 return M
