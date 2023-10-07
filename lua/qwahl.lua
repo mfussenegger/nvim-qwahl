@@ -66,7 +66,7 @@ end
 function M.buffers()
   local bufs = vim.tbl_filter(
     function(b)
-      return api.nvim_buf_is_loaded(b) and api.nvim_buf_get_option(b, 'buftype') ~= 'quickfix'
+      return vim.fn.buflisted(b) == 1 and api.nvim_buf_get_option(b, 'buftype') ~= 'quickfix'
     end,
     api.nvim_list_bufs()
   )
