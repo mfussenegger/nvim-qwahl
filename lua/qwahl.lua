@@ -468,5 +468,18 @@ function M.helptags()
   end)
 end
 
+--- Show highlights groups.
+--- Show the highlight definition of a specific highlight group
+function M.highlights()
+  local groups = vim.fn.getcompletion("", "highlight")
+  local opts = {
+    prompt = "Highlight: ",
+  }
+  vim.ui.select(groups, opts, function(h)
+    if h then
+      vim.cmd.hi(h)
+    end
+  end)
+end
 
 return M
