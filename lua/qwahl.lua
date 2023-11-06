@@ -158,6 +158,7 @@ function M.lsp_tags(opts)
     end
   end
 
+  ---@param item lsp.DocumentSymbol|lsp.SymbolInformation
   local function jump(item)
     if not item then
       opts.on_done()
@@ -376,7 +377,10 @@ end
 
 --- Show tagstack. Open selected entry in current window and jump to its position
 function M.tagstack()
-  local stack = vim.fn.gettagstack()
+  local function is_valid(x)
+    return api.nvim_buf_is_valid(x.bufnr)
+  end
+  local items = vim.tbl_filter(is_valid, vim.fn.gettagstack().items)
   local opts = {
     prompt = 'Tagstack: ',
     format_item = function(loc)
@@ -384,7 +388,7 @@ function M.tagstack()
     end
   }
   local win = api.nvim_get_current_win()
-  ui.select(stack.items or {}, opts, function(loc)
+  ui.select(items or {}, opts, function(loc)
     if loc then
       api.nvim_set_current_buf(loc.bufnr)
       api.nvim_win_set_cursor(win, { loc.from[2], loc.from[3] })
