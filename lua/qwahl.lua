@@ -350,8 +350,10 @@ function M.jumplist()
         if f then
           local contents = f:read("*a")
           f:close()
-          local lines = vim.split(contents, "\n")
-          line = lines[loc.lnum]
+          if contents then
+            local lines = vim.split(contents, "\n")
+            line = lines[loc.lnum]
+          end
         end
       end
       local label =  M.format_bufname(loc.bufnr) .. ':' .. tostring(loc.lnum)
