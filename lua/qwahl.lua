@@ -66,7 +66,7 @@ end
 function M.buffers()
   local bufs = vim.tbl_filter(
     function(b)
-      return vim.fn.buflisted(b) == 1 and api.nvim_buf_get_option(b, 'buftype') ~= 'quickfix'
+      return vim.fn.buflisted(b) == 1 and vim.bo[b].buftype ~= 'quickfix'
     end,
     api.nvim_list_bufs()
   )
@@ -74,11 +74,11 @@ function M.buffers()
     local fullname = api.nvim_buf_get_name(b)
     local name
     if #fullname == 0 then
-      name = '[No Name] (' .. api.nvim_buf_get_option(b, 'buftype') .. ')'
+      name = '[No Name] (' .. vim.bo[b].buftype .. ')'
     else
       name = M.format_bufname(b)
     end
-    local modified = api.nvim_buf_get_option(b, 'modified')
+    local modified = vim.bo[b].modified
     return modified and name .. ' [+]' or name
   end
   local opts = {
@@ -133,7 +133,9 @@ function M.lsp_tags(opts)
     return false
   end
   local clients = {}
-  for _, client in pairs(vim.lsp.get_active_clients({ bufnr = bufnr })) do
+  ---@diagnostic disable-next-line: deprecated
+  local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients
+  for _, client in pairs(get_clients({ bufnr = bufnr })) do
     if client.server_capabilities.documentSymbolProvider then
       table.insert(clients, client)
       break
@@ -153,6 +155,7 @@ function M.lsp_tags(opts)
         table.insert(items, x)
       end
       if x.children then
+        assert(add_items)
         add_items(x.children, x)
       end
     end
@@ -278,7 +281,7 @@ function M.buf_tags()
     '-',
     '--sort=yes',
     '--excmd=number',
-    '--language-force=' .. api.nvim_buf_get_option(0, 'filetype'),
+    '--language-force=' .. vim.bo.filetype,
     bufname
   })
   if not ok or api.nvim_get_vvar('shell_error') ~= 0 then
@@ -405,7 +408,7 @@ end
 --- Show diagnostic and jump to the location if selected
 ---
 ---@param bufnr? integer 0 for current buffer; nil for all diagnostic
----@param opts? {lnum?: integer, severity?: DiagnosticSeverity} See vim.diagnostic.get
+---@param opts? {lnum?: integer, severity?: vim.diagnostic.Severity} See vim.diagnostic.get
 function M.diagnostic(bufnr, opts)
   local diagnostic = vim.diagnostic.get(bufnr, opts)
   local ui_opts = {
