@@ -186,6 +186,10 @@ function M.lsp_tags(opts)
     if opts.mode and opts.mode == "prev" then
       items = list_reverse(items)
     end
+    if not next(items) then
+      vim.notify("No symbols found", vim.log.levels.INFO)
+      return
+    end
     if opts.pick_first then
       jump(items[1])
       return
@@ -220,9 +224,13 @@ function M.lsp_tags(opts)
     params.context = {
       includeDeclaration = true
     }
-    client.request("textDocument/documentSymbol", params, function(err, result)
+
+    ---@param err lsp.ResponseError
+    ---@param result lsp.DocumentSymbol[]|lsp.SymbolInformation[]|nil
+    local function on_symbols(err, result)
       assert(not err, vim.inspect(err))
       if not result then
+        countdown()
         return
       end
       for _, x in pairs(result) do
@@ -234,7 +242,8 @@ function M.lsp_tags(opts)
       end
       add_items(result)
       countdown()
-    end)
+    end
+    client.request("textDocument/documentSymbol", params, on_symbols)
   end
 end
 
