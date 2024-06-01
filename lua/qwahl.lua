@@ -221,6 +221,7 @@ function M.lsp_tags(opts)
   end
   for _, client in ipairs(clients) do
     local params = vim.lsp.util.make_position_params(win, client.offset_encoding)
+    ---@diagnostic disable-next-line: inject-field
     params.context = {
       includeDeclaration = true
     }
