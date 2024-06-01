@@ -275,12 +275,40 @@ local function git_tags()
   end)
 end
 
+local function local_help_tags()
+  local bufnr = api.nvim_get_current_buf()
+  local parser = vim.treesitter.get_parser(bufnr, "vimdoc")
+  local query = vim.treesitter.query.parse(parser:lang(), [[
+    (tag
+      text: (word) @tag)
+  ]])
+  local trees = parser:parse()
+  local root = trees[1]:root()
+  local tags = {}
+  for _, node, _, _ in query:iter_captures(root, bufnr) do
+    local text = vim.treesitter.get_node_text(node, bufnr)
+    table.insert(tags, text)
+  end
+  local opts = {
+    prompt = "Helptags: ",
+    format_item = tostring,
+  }
+  return ui.select(tags, opts, function(choice)
+    if choice then
+      vim.cmd.help(choice)
+    end
+  end)
+end
+
 
 --- Displays tags ad-hoc generated using a `ctags` executable.
 --- Jumps to tag when selected.
 function M.buf_tags()
   if vim.bo.filetype == 'git' or vim.bo.filetype == "gitcommit" then
     return git_tags()
+  end
+  if vim.bo.filetype == "help" then
+    return local_help_tags()
   end
   local bufname = api.nvim_buf_get_name(0)
   assert(vim.fn.filereadable(bufname), 'File to generate tags for must be readable')
