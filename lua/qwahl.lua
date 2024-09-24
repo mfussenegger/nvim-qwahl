@@ -311,24 +311,44 @@ function M.buf_tags()
   if vim.bo.filetype == "help" then
     return local_help_tags()
   end
-  local bufname = api.nvim_buf_get_name(0)
-  assert(vim.fn.filereadable(bufname), 'File to generate tags for must be readable')
-  local ok, output = pcall(vim.fn.system, {
+  local bufnr = api.nvim_get_current_buf()
+  local bufname = api.nvim_buf_get_name(bufnr)
+  local filename
+  if vim.startswith(vim.uri_from_bufnr(bufnr), "file://") then
+    filename = bufname
+  else
+    filename = vim.fn.tempname()
+    local lines = api.nvim_buf_get_lines(bufnr, 0, -1, true)
+    local file = io.open(filename, "w")
+    if not file then
+      vim.fn.delete(filename)
+      vim.notify("Couldn't create tmpfile to run ctags on nonfile buffer", vim.log.levels.WARN)
+      return
+    end
+    for _, line in ipairs(lines) do
+      file:write(line)
+      file:write("\n")
+    end
+    file:close()
+  end
+  assert(vim.fn.filereadable(filename), 'File to generate tags for must be readable')
+  local ok, output
+  ok, output = pcall(vim.fn.system, {
     'ctags',
     '-f',
     '-',
     '--sort=yes',
     '--excmd=number',
     '--language-force=' .. vim.bo.filetype,
-    bufname
+    filename
   })
   if not ok or api.nvim_get_vvar('shell_error') ~= 0 then
-    output = vim.fn.system({'ctags', '-f', '-', '--sort=yes', '--excmd=number', bufname})
+    output = vim.fn.system({'ctags', '-f', '-', '--sort=yes', '--excmd=number', filename})
   end
-  local lines = vim.tbl_filter(
-    function(x) return x ~= '' end,
-    vim.split(output, '\n')
-  )
+  if filename ~= bufname then
+    vim.fn.delete(filename)
+  end
+  local lines = vim.tbl_filter(function(x) return x ~= '' end, vim.split(output, '\n'))
   local tags = vim.tbl_map(function(x) return vim.split(x, '\t') end, lines)
   local opts = {
     prompt = 'Tag: ',
