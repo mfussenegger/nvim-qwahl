@@ -279,6 +279,7 @@ end
 local function local_help_tags()
   local bufnr = api.nvim_get_current_buf()
   local parser = vim.treesitter.get_parser(bufnr, "vimdoc")
+  assert(parser, "vimdoc parser must be built-in")
   local query = vim.treesitter.query.parse(parser:lang(), [[
     (tag
       text: (word) @tag)
@@ -444,10 +445,12 @@ function M.tagstack()
     return api.nvim_buf_is_valid(x.bufnr)
   end
   local items = vim.tbl_filter(is_valid, vim.fn.gettagstack().items)
+  local bufnr = api.nvim_get_current_buf()
   local opts = {
     prompt = 'Tagstack: ',
     format_item = function(loc)
-      return M.format_bufname(loc.bufnr) .. ': ' .. loc.tagname
+      local b = loc.bufnr == 0 and bufnr or loc.bufnr
+      return M.format_bufname(b) .. ': ' .. loc.tagname
     end
   }
   local win = api.nvim_get_current_win()
