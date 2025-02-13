@@ -31,7 +31,7 @@ M.buffers()                                                      *qwahl.buffers*
      Display open buffers. Opens selected buffer in current window.
 
 
-lsp_tags.opts                                                    *lsp_tags.opts*
+lsp_tags.opts                                              *qwahl.lsp_tags.opts*
 
     Fields: ~
         {kind}  (nil|string[])  filter tags by kind
@@ -57,6 +57,11 @@ M.jumplist()                                                    *qwahl.jumplist*
      Show jumplist. Open selected entry in current window and jump to its position.
 
 
+M.changelist()                                                *qwahl.changelist*
+     Show changelist.
+     Open selected entry in the current window and jump to its location.
+
+
 M.tagstack()                                                    *qwahl.tagstack*
      Show tagstack. Open selected entry in current window and jump to its position
 
@@ -66,8 +71,8 @@ M.diagnostic({bufnr?}, {opts?})                               *qwahl.diagnostic*
 
 
     Parameters: ~
-        {bufnr?}  (integer)                                       0 for current buffer; nil for all diagnostic
-        {opts?}   ({lnum?:integer,severity?:DiagnosticSeverity})  See vim.diagnostic.get
+        {bufnr?}  (integer)                                            0 for current buffer; nil for all diagnostic
+        {opts?}   ({lnum?:integer,severity?:vim.diagnostic.Severity})  See vim.diagnostic.get
 
 
 M.spellsuggest()                                            *qwahl.spellsuggest*

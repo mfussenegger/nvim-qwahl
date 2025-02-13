@@ -439,6 +439,45 @@ function M.jumplist()
 end
 
 
+--- Show changelist.
+--- Open selected entry in the current window and jump to its location.
+function M.changelist()
+  local changelist = vim.fn.getchangelist()[1]
+  table.sort(changelist, function(a, b)
+    return a.lnum < b.lnum
+  end)
+  local last_lnum = nil
+  local max_lnum = 0
+  local changes = {}
+  for _, change in ipairs(changelist) do
+    if last_lnum ~= change.lnum then
+      table.insert(changes, change)
+    end
+    last_lnum = change.lnum
+    max_lnum = math.max(change.lnum, max_lnum)
+  end
+  local lines = api.nvim_buf_get_lines(0, 0, -1, true)
+  local num_digits = math.floor(math.log(max_lnum, 10) + 1)
+  local fmt = '%0' .. tostring(num_digits) .. 'd: %s'
+  local opts = {
+    prompt = "Changelist: ",
+    format_item = function (change)
+      local line = lines[change.lnum]
+      return string.format(fmt, change.lnum, (line or ""))
+    end
+  }
+  local win = api.nvim_get_current_win()
+  ui.select(changes, opts, function(change)
+    if change then
+      api.nvim_win_set_cursor(win, { change.lnum, change.col })
+      api.nvim_win_call(win, function()
+        vim.cmd('normal! zvzz')
+      end)
+    end
+  end)
+end
+
+
 --- Show tagstack. Open selected entry in current window and jump to its position
 function M.tagstack()
   local function is_valid(x)
