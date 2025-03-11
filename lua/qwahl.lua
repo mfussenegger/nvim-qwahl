@@ -98,6 +98,7 @@ end
 ---@field mode "next"|"prev"|nil Include only tags after/before the cursor
 ---@field pick_first boolean? Select first result automatically. Defaults to false
 ---@field on_done function? Callback called after selection/abort
+---@field timeout? integer Turns lsp_tags into a synchronous operation blocking for at most timeout milliseconds
 
 
 --- Display LSP symbols in current buffer, jump to symbol position when selected.
@@ -132,6 +133,7 @@ function M.lsp_tags(opts)
     end
     return false
   end
+  ---@type vim.lsp.Client[]
   local clients = {}
   ---@diagnostic disable-next-line: deprecated
   local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients
@@ -178,9 +180,13 @@ function M.lsp_tags(opts)
     opts.on_done(item)
   end
 
+  local abort = false
   local function countdown()
     num_remaining = num_remaining - 1
     if num_remaining > 0 then
+      return
+    end
+    if abort then
       return
     end
     if opts.mode and opts.mode == "prev" then
@@ -245,6 +251,13 @@ function M.lsp_tags(opts)
       countdown()
     end
     client.request("textDocument/documentSymbol", params, on_symbols)
+  end
+  if opts.timeout then
+    vim.wait(opts.timeout, function() return num_remaining == 0 end)
+    if num_remaining > 0 then
+      abort = true
+      error("timeout during lsp_tags")
+    end
   end
 end
 
