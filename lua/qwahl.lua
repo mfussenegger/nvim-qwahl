@@ -250,7 +250,12 @@ function M.lsp_tags(opts)
       add_items(result)
       countdown()
     end
-    client.request("textDocument/documentSymbol", params, on_symbols)
+    if vim.fn.has("nvim-0.11") == 1 then
+      client:request("textDocument/documentSymbol", params, on_symbols)
+    else
+      ---@diagnostic disable-next-line: param-type-mismatch
+      client.request("textDocument/documentSymbol", params, on_symbols)
+    end
   end
   if opts.timeout then
     vim.wait(opts.timeout, function() return num_remaining == 0 end)
