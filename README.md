@@ -5,8 +5,11 @@ A collection of pickers utilizing `vim.ui.select`. Switch buffers, jump to tags 
 ## Installation
 
 ```bash
-git clone https://github.com/mfussenegger/nvim-qwahl.git ~/.config/nvim/pack/plugins/start/nvim-qwahl
+git clone https://codeberg.org/mfussenegger/nvim-qwahl.git \
+    ~/.config/nvim/pack/plugins/start/nvim-qwahl
 ```
+
+Or using a plugin-manager.
 
 ## Usage
 
